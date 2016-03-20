@@ -8,39 +8,26 @@
 // Contains declarations for Board class.
 #ifndef Board_Board_h
 #define Board_Board_h
+typedef int ValueType;
+#include <fstream>
 
 class Board
-//class declaration for the Board class
+// Stores the entire Sudoku board
 {
-  public:
-    //default constructor
-    Board();
+   public:
+      Board(int);
+      void Clear();
+      void Initialize(ifstream &fin);
+      void Print();
+      bool IsBlank(int, int);
+      ValueType GetCell(int, int);
+      void  SetCell(int i,int j, ValueType val);
+   private:
 
-    //initializes the board and updates conflicts
-    void initializeBoard();
+      // The following matrices go from 1 to BoardSize in each
+      // dimension.  I.e. they are each (BoardSize+1) X (BoardSize+1)
 
-    //print board and update conflicts
-    void printBoard();
-
-    //check whether a value causes conflicts if it is placed in cell
-    void checkConflicts(int i, int j, int k);
-
-    //adds a value to cell and updates conflicts
-    void addValue(int i, int j, int k);
-
-    //clears cell and update conflicts
-    void clearCell(int i, int j);
-
-    //checks to see if board is solved
-    bool isSolved();
-
-  private:
-    //vector to store words in
-    char** boardMatrix;
-    int boardSize;
-    int** conflictsRows;
-    int** conflictsCols;
-    int** conflictsSqus;
-}; //end of Board
+      matrix<ValueType> value;
+};
 
 #endif
