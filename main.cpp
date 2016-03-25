@@ -38,6 +38,7 @@ class Board
       void Initialize(ifstream &fin);
       void Print();
       bool IsBlank(int, int);
+      
       ValueType GetCell(int, int);
       void  SetCell(int i,int j, ValueType val);
    private:
@@ -46,6 +47,9 @@ class Board
       // dimension.  I.e. they are each (BoardSize+1) X (BoardSize+1)
 
       matrix<ValueType> value;
+      int** conflictsSquare;
+      int** conflictsRow;
+      int** conflictsCol;
 };
 
 Board::Board(int sqSize)
@@ -57,11 +61,13 @@ Board::Board(int sqSize)
 void Board::Clear()
 // Clear the entire board.
 {
+
 }
 
 void  Board::SetCell(int i,int j, ValueType val)
 // set cell i,j to val and update conflicts
 {
+  value[i][j] = val;
 }
 
 void Board::Initialize(ifstream &fin)
@@ -73,13 +79,13 @@ void Board::Initialize(ifstream &fin)
    for (int i = 1; i <= boardSize; i++)
       for (int j = 1; j <= boardSize; j++)
       {
-	 fin >> ch;
+      	 fin >> ch;
 
-         // If the read char is not Blank
-	 if (ch != '.')
-	 {
+          // If the read char is not Blank
+      	 if (ch != '.')
+      	 {
             SetCell(i,j,ch-'0');   // Convert char to int
-	 }
+      	 }
       }
 }
 
@@ -134,12 +140,12 @@ void Board::Print()
       }
       for (int j = 1; j <= boardSize; j++)
       {
-	 if ((j-1) % squareSize == 0)
-	    cout << "|";
-	 if (!IsBlank(i,j))
-	    cout << " " << GetCell(i,j) << " ";
-	 else
-	    cout << "   ";
+        	 if ((j-1) % squareSize == 0)
+        	    cout << "|";
+        	 if (!IsBlank(i,j))
+        	    cout << " " << GetCell(i,j) << " ";
+        	 else
+        	    cout << "   ";
       }
       cout << "|";
       cout << endl;
@@ -172,9 +178,9 @@ int main()
 
       while (fin && fin.peek() != 'Z')
       {
-	 b1.Initialize(fin);
-	 b1.Print();
-	 //b1.PrintConflicts();
+        	 b1.Initialize(fin);
+        	 b1.Print();
+        	 //b1.PrintConflicts();
       }
    }
    catch  (indexRangeError &ex)
