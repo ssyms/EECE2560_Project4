@@ -32,25 +32,63 @@ int numSolutions = 0;
 class Board
 // Stores the entire Sudoku board
 {
-   public:
+    public:
+      //Constructor
       Board(int);
+
+      //Sets all cells to -1 indicating a blank board
       void Clear();
+
+      //Sets an individual cell to -1
+      void ClearCell(int i , int j, ValueType val);
+
+      //Reads Sudoku text file and puts it into value matrix
       void Initialize(ifstream &fin);
+
+      //Prints out the board
       void Print();
+
+      //Prints out the conflicts
+      void PrintConflicts();
+
+      //Checks if the cell is empty(-1)
       bool IsBlank(int, int);
-      
+
+      //checks conflicts in the row, conlumn, and sqaure
+      bool checkConflicts(int i, int j, ValueType val);
+
+      //gets the value of a cell
       ValueType GetCell(int, int);
+
+      //sets the value of the cell and updates conflicts
       void  SetCell(int i,int j, ValueType val);
-   private:
+
+      //adds value to given cell if there are no conflicts and updates
+      void AddValue(int i, int j, ValueType val);
+
+      //checks whether board is solved
+      bool isSolved();
+
+    private:
 
       // The following matrices go from 1 to BoardSize in each
       // dimension.  I.e. they are each (BoardSize+1) X (BoardSize+1)
 
       matrix<ValueType> value;
-      int** conflictsSquare;
-      int** conflictsRow;
-      int** conflictsCol;
+      bool conflictsSq[8][8];
+      bool conflictsRow[8][8];
+      bool conflictsCol[8][8];
 };
+
+int SquareNumber(int i, int j)
+// Return the square number of cell i,j (counting from left to right,
+// top to bottom.  Note that i and j each go from 1 to BoardSize
+{
+   // Note that (int) i/SquareSize and (int) j/SquareSize are the x-y
+   // coordinates of the square that i,j is in.
+
+   return squareSize * ((i-1)/squareSize) + (j-1)/squareSize + 1;
+}
 
 Board::Board(int sqSize)
    : value(boardSize+1,boardSize+1)
@@ -58,16 +96,65 @@ Board::Board(int sqSize)
 {
 }
 
+ValueType Board::GetCell(int i, int j)
+// Returns the value stored in a cell.  Throws an exception
+// if bad values are passed.
+{
+   if (i >= 1 && i <= boardSize && j >= 1 && j <= boardSize)
+      return value[i][j];
+   else
+      throw rangeError("bad value in GetCell");
+}
+
+bool Board::IsBlank(int i, int j)
+// Returns true if cell i,j is blank, and false otherwise.
+{
+    if ( GetCell( i, j) == -1 )
+    {
+        return true;
+    } else if( GetCell( i,  j) > 0 && GetCell( i,  j) < 10 )
+    {
+        return false;
+    }
+   else if (i < 1 || i > boardSize || j < 1 || j > boardSize)
+      throw rangeError("bad value in SetCell");
+      return false;
+}
+
+void Board::ClearCell(int i, int j, ValueType val)
+//clears a single cell and updates conflicts
+{
+    value[i][j] = blank;
+    int sq = SquareNumber(i, j);
+    conflictsRow[(i - 1)][(val - 1)] = true;
+    conflictsCol[(j - 1)][(val - 1)] = true;
+    conflictsSq[(sq - 1)][(val - 1)] = true;
+}
+
 void Board::Clear()
 // Clear the entire board.
 {
+  for (int i = 1; i <= boardSize; i++)
+     for (int j = 1; j <= boardSize; j++)
+     {
+       if(!IsBlank(i,j))
+       {
+          ValueType c = GetCell(i, j);
+          ClearCell(i, j, c);
+        }
+     }
 
 }
+
 
 void  Board::SetCell(int i,int j, ValueType val)
 // set cell i,j to val and update conflicts
 {
   value[i][j] = val;
+  int sq = SquareNumber(i, j);
+  conflictsRow[(i - 1)][(val - 1)] = false;
+  conflictsCol[(j - 1)][(val - 1)] = false;
+  conflictsSq[(sq - 1)][(val - 1)] = false;
 }
 
 void Board::Initialize(ifstream &fin)
@@ -89,15 +176,17 @@ void Board::Initialize(ifstream &fin)
       }
 }
 
-int SquareNumber(int i, int j)
-// Return the square number of cell i,j (counting from left to right,
-// top to bottom.  Note that i and j each go from 1 to BoardSize
+bool Board::checkConflicts(int i, int j, ValueType val)
+//checks whether a value in a cell will cause conflicts
 {
-   // Note that (int) i/SquareSize and (int) j/SquareSize are the x-y
-   // coordinates of the square that i,j is in.
-
-   return squareSize * ((i-1)/squareSize) + (j-1)/squareSize + 1;
+    int sq = SquareNumber(i, j);
+    bool r = conflictsRow[(i - 1)][(val - 1)];
+    bool c = conflictsCol[(i - 1)][(val - 1)];
+    bool s = conflictsCol[(sq - 1)][(val - 1)];
+    return  r && c && s;
 }
+
+
 
 ostream &operator<<(ostream &ostr, vector<int> &v)
 // Overloaded output operator for vector class.
@@ -108,22 +197,6 @@ ostream &operator<<(ostream &ostr, vector<int> &v)
    return ostr;
 }
 
-ValueType Board::GetCell(int i, int j)
-// Returns the value stored in a cell.  Throws an exception
-// if bad values are passed.
-{
-   if (i >= 1 && i <= boardSize && j >= 1 && j <= boardSize)
-      return value[i][j];
-   else
-      throw rangeError("bad value in GetCell");
-}
-
-bool Board::IsBlank(int i, int j)
-// Returns true if cell i,j is blank, and false otherwise.
-{
-   if (i < 1 || i > boardSize || j < 1 || j > boardSize)
-      throw rangeError("bad value in SetCell");
-}
 
 void Board::Print()
 // Prints the current board.
@@ -149,6 +222,7 @@ void Board::Print()
       }
       cout << "|";
       cout << endl;
+
    }
 
    cout << " -";
@@ -156,7 +230,86 @@ void Board::Print()
       cout << "---";
    cout << "-";
    cout << endl;
+   PrintConflicts();
 }
+
+void Board::PrintConflicts()
+//prints conflict list in the board
+{
+  cout << "Row Conflicts: \n";
+  for(int i = 0; i < 9; i++)
+  //prints out all row conflicts
+  {
+    for(int j = 0; j < 9; j++)
+    //prints out all row conflicts
+    {
+        cout << conflictsRow[i][j];
+    }
+    cout << "\n";
+  }
+
+  cout << "Column Conflicts\n";
+  for(int i = 0; i < 9; i++)
+  //prints out all row conflicts
+  {
+    for(int j = 0; j < 9; j++)
+    //prints out all row conflicts
+    {
+        cout << conflictsCol[i][j];
+    }
+    cout << "\n";
+  }
+
+  cout << "Square Conflicts\n";
+  for(int i = 0; i < 9; i++)
+  //prints out all row conflicts
+  {
+    for(int j = 0; j < 9; j++)
+    //prints out all row conflicts
+    {
+        cout << conflictsSq[i][j];
+    }
+    cout << "\n";
+  }
+
+}
+
+void Board::AddValue(int i, int j, ValueType val)
+//cheks conflicts, adds value to cell, updates conflicts
+{
+  if(checkConflicts(i, j, val))
+  //if there are conflicts
+  {
+    cout << "There is a conflict!\n";
+  } else {
+    SetCell(i, j, val);
+  }
+}
+
+bool Board::isSolved()
+//checks whether board is solved
+{
+  for (int i = 1; i <= boardSize; i++)
+  //for each row
+  {
+     for (int j = 1; j <= boardSize; j++)
+     //for each column
+     {
+        if (value[i][j] == blank)
+        //checks if cell is blank
+        {
+          cout << "Board is not solved.\n";
+          cout << "Blank space at: " << i << ", " << j << endl;
+          return false;
+        }
+
+     } //end of column for loop
+
+  } //end of cell for loop
+
+  return true;
+
+} //end of isSolved
 
 int main()
 {
@@ -180,7 +333,7 @@ int main()
       {
         	 b1.Initialize(fin);
         	 b1.Print();
-        	 //b1.PrintConflicts();
+           b1.isSolved();
       }
    }
    catch  (indexRangeError &ex)
