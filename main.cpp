@@ -77,9 +77,9 @@ private:
 // The following matrices go from 1 to BoardSize in each
 // dimension.  I.e. they are each (BoardSize+1) X (BoardSize+1)
 matrix<ValueType> value;
-bool conflictsSq[8][8];
-bool conflictsRow[8][8];
-bool conflictsCol[8][8];
+bool conflictsSq[9][9];
+bool conflictsRow[9][9];
+bool conflictsCol[9][9];
 };
 
 int SquareNumber(int i, int j)
@@ -139,15 +139,17 @@ void Board::Clear()
 	for (int i = 1; i <= boardSize; i++)
 		for (int j = 1; j <= boardSize; j++)
 		{
-			if(!IsBlank(i,j))
+			value[i][j] = blank;
+			int sq = SquareNumber(i, j);
+			for(int k = 0; k < 9; k++)
 			{
-				ValueType c = GetCell(i, j);
-				ClearCell(i, j, c);
+				conflictsRow[(i - 1)][k] = true;
+				conflictsCol[(j - 1)][k] = true;
+				conflictsSq[(sq - 1)][k] = true;
 			}
+
 		}
-
 }
-
 
 void Board::SetCell(int i,int j, ValueType val)
 // set cell i,j to val and update conflicts
@@ -178,16 +180,21 @@ void Board::Initialize(ifstream &fin)
 		}
 }
 
+
 bool Board::CheckConflicts(int i, int j, ValueType val)
 //checks whether a value in a cell will cause conflicts
 {
 	int sq = SquareNumber(i, j);
+	cout << "SquareNumber: " << sq <<"\n";
 	bool r = conflictsRow[(i - 1)][(val - 1)];
-	bool c = conflictsCol[(i - 1)][(val - 1)];
-	bool s = conflictsCol[(sq - 1)][(val - 1)];
+	bool c = conflictsCol[(j - 1)][(val - 1)];
+	bool s = conflictsSq[(sq - 1)][(val - 1)];
+	if ( i == 8 &&  j == 1 && sq == 7){
+		cout << " This is the one !!!! r = " << r << ", c = " << c << ", s = " << s << "\n";
+	}
+	//returns false if there IS a conflict
 	return r && c && s;
 }
-
 
 
 ostream &operator<<(ostream &ostr, vector<int> &v)
@@ -198,6 +205,7 @@ ostream &operator<<(ostream &ostr, vector<int> &v)
 	ostr << endl;
 	return ostr;
 }
+
 
 
 void Board::Print()
@@ -276,15 +284,91 @@ void Board::PrintConflicts()
 
 }
 
+bool Board::PlaceN(int i, int j)
+//recursively solves sudoku puzzle
+{
+	Print();
+	//cout <<"\n________________________________";
+	//cout << "\nIN CELL:    " << i << ", " << j << "\n\n";
+	if(IsBlank(i, j))
+	//if the cell is blank
+	{
+		//cout << "Blank Cell: " << i << ", " << j << endl;
+		for(int k = 1; k <= 9; k++)
+		//increments through each possible digit
+		{
+			//cout << "Testing Digit " << k << " in Cell: " << i << ", " << j << endl;
+			if(CheckConflicts(i, j, k))
+			//checks for conflicts
+			{
+				//cout << "No conflict for " << k << " in Cell: " << i << ", " << j << endl;
+				SetCell(i, j, k);
+				if(i == 9)
+				//increments i and j
+				{
+					if(j == 9)
+					{
+						return true;
+					} else
+					{
+						i = 1;
+						if(PlaceN(i, j+1))
+						//recurs to the next cell
+						{
+							return true;
+						}
+						else {
+							//cout << "Clearing " << k << " from Cell: " << i << ", " << j << endl;
+							ClearCell(i, j, k);
+							i = 9;
+						} //end of recursion
+					}
+				} else {
+					if(PlaceN(i+1, j))
+					//recurs to the next cell
+					{
+						return true;
+					}
+					else {
+						//cout << "Clearing " << k << " from Cell: " << i << ", " << j << endl;
+						ClearCell(i, j, k);
+					} //end of recursion
+				}
+
+			} //end of if statment to check for conflicts
+
+		} // end of for loop to increment through each digit
+
+		//if no digit does not cause conflicts, return false
+		return false;
+
+	} else {
+		if(i == 9)
+		//increments to next cell
+		{
+			if(j == 9)
+			{
+				return true;
+			} else
+			{
+				i = 0;
+				j++;
+			}
+		}
+
+		return PlaceN(i + 1,j);
+	}
+}
+
 void Board::AddValue(int i, int j, ValueType val)
 //cheks conflicts, adds value to cell, updates conflicts
 {
 	if(CheckConflicts(i, j, val))
 	//if there are conflicts
 	{
-		cout << "There is a conflict!\n";
-	} else {
 		SetCell(i, j, val);
+	} else {
+		cout << "There is a conflict!\n";
 	}
 }
 
@@ -311,68 +395,7 @@ bool Board::IsSolved()
 
 	return true;
 
-} //end of IsSolved
-
-bool Board::PlaceN(int i, int j)
-//recursively solves sudoku puzzle
-{
-	cout << "In Cell: " << i << ", " << j << endl;
-	if(IsBlank(i, j))
-	//if the cell is blank
-	{
-
-		for(int k = 1; k <= 9; k++)
-		//increments through each possible digit
-		{
-			if(!CheckConflicts(i, j, k))
-			//checks for conflicts
-			{
-				SetCell(i, j, k);
-				if(i == 9)
-				//increments i and j
-				{
-					if(j== 9)
-					{
-						return true;
-					} else
-					{
-						i=0;
-						j++;
-					}
-				}
-
-				if(PlaceN(i, j))
-				//recurs to the next cell
-				{
-					return true;
-				}
-				else {
-					ClearCell(i, j, k);
-				} //end of recursion
-
-			} //end of if statment to check for conflicts
-
-		} // end of for loop to increment through each digit
-
-		//if no digit does not cause conflicts, return false
-		return false;
-
-	} else {
-		if(i == 9)
-		//increments to next cell
-		{
-			if(j == 9)
-			{
-				return true;
-			} else
-			{
-				i=0;
-				j++;
-			}
-		}
-		return PlaceN(i,j);
-	}
-}
+} //end of isSolved
 
 int main()
 {
@@ -391,17 +414,21 @@ int main()
 	try
 	{
 		Board b1(squareSize);
+		b1.Clear();
+		b1.Print();
 
 		while (fin && fin.peek() != 'Z')
 		{
 			b1.Initialize(fin);
 			b1.Print();
-			b1.IsSolved();
 			if (b1.PlaceN(1,1)) {
 				cout << "done son\n";
 				b1.Print();
 				b1.IsSolved();
+			} else {
+				cout << "\nThere was no solution, sorry guys.";
 			}
+			cout << "\n I'm done, going home!";
 		}
 
 	}
