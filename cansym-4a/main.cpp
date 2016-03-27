@@ -58,9 +58,6 @@ bool IsBlank(int i, int j);
 //checks conflicts in the row, conlumn, and sqaure
 bool CheckConflicts(int i, int j, ValueType val);
 
-//finds the average recursions needed to solve sudoku
-void averageRecursions();
-
 //gets the value of a cell
 ValueType GetCell(int i, int j);
 
@@ -91,8 +88,6 @@ bool conflictsSq[9][9];
 bool conflictsRow[9][9];
 bool conflictsCol[9][9];
 int cMatrix[9][9];
-std::vector<int> recursiveCalls;
-int recursions;
 };
 
 int SquareNumber(int i, int j)
@@ -178,7 +173,7 @@ void Board::Initialize(ifstream &fin)
 // Read a Sudoku board from the input file.
 {
 	char ch;
-	recursions = 0;
+
 	Clear();
 	for (int i = 1; i <= boardSize; i++)
 		for (int j = 1; j <= boardSize; j++)
@@ -224,7 +219,6 @@ int ** Board::calculateConflictsMatrix(){
 
 
 bool Board::smartPlaceN(){
-	recursions++;
 	int ** thiscMatrix = calculateConflictsMatrix();
 	for (int conflicts = 1; conflicts <= 9; conflicts++){
 		for (int x = 1; x <= 9 ; x++){
@@ -242,12 +236,17 @@ bool Board::smartPlaceN(){
 								SetCell(x, y, k);
 								//cout << "\nCongradulations, a " << k << " was placed at (" << x << ", " << y << ")\n";
 								if (IsSolved()){
+									cout << "SOLVED!!!!";
+									Print();
 									return true;
 								}
+								//Print();
 								if (smartPlaceN()){
 									return true;
 								} else {
+									//cout << "\nRemoving a " << k << " that was placed at (" << x << ", " << y << ")\n";
 									ClearCell(x,y,k);
+									//Print();
 								}
 							}
 						}
@@ -315,6 +314,7 @@ void Board::Print()
 		cout << "---";
 	cout << "-";
 	cout << endl;
+	PrintConflicts();
 }
 
 void Board::PrintConflicts()
@@ -360,8 +360,6 @@ void Board::PrintConflicts()
 
 
 bool Board::PlaceN(int i, int j, int value){
-	recursions++;
-	cout << "\nrecursions" << recursions;
 	if(IsBlank(i, j)){
 		SetCell(i, j, value);
 		Print();
@@ -421,38 +419,19 @@ bool Board::IsSolved()
 			if (value[i][j] == blank)
 			//checks if cell is blank
 			{
-				//cout << "Board is not solved.\n";
+				cout << "Board is not solved.\n";
+				//cout << "Blank space at: " << i << ", " << j << endl;
 				return false;
 			}
 
 		} //end of column for loop
 
 	} //end of cell for loop
-	recursiveCalls.push_back(recursions);
-	recursions = 0;
+
 	cout << "Board is solved.\n";
-	Print();
 	return true;
 
-} //end of IsSolved
-
-void Board::averageRecursions()
-//finds the average recursions to solve the board
-{
-	vector<int>::const_iterator it;
-	it = recursiveCalls.begin();
-	int i = 1;
-	int av = 0;
-  	while (it++ != recursiveCalls.end()) {
-		av += *it;
-		i++;
-	}
-	cout << "Total number of recursions: " << av << endl;
-	av = av / i;
-	cout << "The average number of recursions: " << av << endl;
-
-}
-
+} //end of isSolved
 
 int main()
 {
@@ -483,11 +462,13 @@ int main()
 
 		while (fin && fin.peek() != 'Z')
 		{
-			cout << "\nNow working on puzzle number " << puzzleCounter+1 << ":\n";
+
+			cout << "\nPuzzle number " << puzzleCounter << ":\n";
 			b1.Initialize(fin);
 			t1=clock();
-			if (b1.smartPlaceN()){
-				cout << "\nGood Job";
+			if (b1.smartPlaceN())
+			{
+				cout << "good job.\n";
 			};
 			t2=clock();
 			puzzleCounter++;
@@ -496,8 +477,7 @@ int main()
 			cout << "\nFinished puzzle number " << puzzleCounter << "\n";
 			cout << "This puzzle took " << seconds << " seconds to solve.\n\n\n";
 		}
-
-		b1.averageRecursions();
+		b1.IsSolved();
 
 	}
 
