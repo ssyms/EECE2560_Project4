@@ -11,6 +11,7 @@
 #include "d_except.h"
 #include <list>
 #include <fstream>
+#include <time.h>
 
 using namespace std;
 
@@ -233,19 +234,19 @@ bool Board::smartPlaceN(){
 							if (CheckConflicts(x,y,k)){
 
 								SetCell(x, y, k);
-								cout << "\nCongradulations, a " << k << " was placed at (" << x << ", " << y << ")\n";
+								//cout << "\nCongradulations, a " << k << " was placed at (" << x << ", " << y << ")\n";
 								if (IsSolved()){
 									cout << "SOLVED!!!!";
 									Print();
 									return true;
 								}
-								Print();
+								//Print();
 								if (smartPlaceN()){
 									return true;
 								} else {
-									cout << "\nRemoving a " << k << " that was placed at (" << x << ", " << y << ")\n";
+									//cout << "\nRemoving a " << k << " that was placed at (" << x << ", " << y << ")\n";
 									ClearCell(x,y,k);
-									Print();
+									//Print();
 								}
 							}
 						}
@@ -517,6 +518,11 @@ int main()
 {
 	ifstream fin;
 
+	std::cout << "Clock time: " << clock() << std::endl;
+    clock_t t1,t2;
+
+    t1=clock();
+
 	// Read the sample grid from the file.
 	string fileName = "sudoku.txt";
 
@@ -554,4 +560,10 @@ int main()
 		cout << ex.what() << endl;
 		exit(1);
 	}
+	t2=clock();
+    float diff = ((float)t2-(float)t1);
+
+    float seconds = diff / CLOCKS_PER_SEC;
+    std::cout << "\n\nRuntime of program: "<< seconds << " seconds\n";
+
 }
