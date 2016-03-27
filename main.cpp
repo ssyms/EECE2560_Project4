@@ -72,6 +72,12 @@ bool IsSolved();
 //recursively solves the sudoku puzzle
 bool PlaceN(int i, int j, int value);
 
+void setConflictsMatrixToZero();
+
+int ** calculateConflictsMatrix();
+
+bool smartPlaceN();
+
 private:
 
 // The following matrices go from 1 to BoardSize in each
@@ -80,6 +86,7 @@ matrix<ValueType> value;
 bool conflictsSq[9][9];
 bool conflictsRow[9][9];
 bool conflictsCol[9][9];
+int cMatrix[9][9];
 };
 
 int SquareNumber(int i, int j)
@@ -89,7 +96,7 @@ int SquareNumber(int i, int j)
 	// Note that (int) i/SquareSize and (int) j/SquareSize are the x-y
 	// coordinates of the square that i,j is in.
 
-	return squareSize * ((i-1)/squareSize) + (j-1)/squareSize + 1;
+	return squareSize * (((i-1))/squareSize) + ((j-1))/squareSize + 1;
 }
 
 Board::Board(int sqSize)
@@ -180,6 +187,78 @@ void Board::Initialize(ifstream &fin)
 		}
 }
 
+void Board::setConflictsMatrixToZero(){
+	for (int i = 1; i <=9 ; i++){
+		for (int j = 1; j <= 9 ; j++){
+			cMatrix[i][j] = 0;
+		}
+	}
+}
+
+int ** Board::calculateConflictsMatrix(){
+	int ** dynamiccMatrix;
+	dynamiccMatrix = new int*[9]; // dynamic `array (size 4) of pointers to int`
+	for (int i = 0; i < 9; ++i) {
+  		dynamiccMatrix[i] = new int[9];
+  		// each i-th pointer is now pointing to dynamic array (size 10) of actual int values
+	}
+	int sq;
+	bool r, c, s;
+	for (int i = 1; i <=9 ; i++){
+		for (int j = 1; j <= 9 ; j++){
+			for (int k = 1; k <= 9 ; k++){
+				if (CheckConflicts(i, j, k)) {
+					dynamiccMatrix[(i-1)][(j-1)] += 1;
+					cout << "This is the new conflicts # : " << dynamiccMatrix[(i-1)][(j-1)];
+				};
+			}
+		}
+	}
+	return dynamiccMatrix;
+}
+
+
+bool Board::smartPlaceN(){
+	int ** thiscMatrix;
+	for (int conflicts = 1; conflicts <= 9; conflicts++){
+		for (int x = 1; x <= 9 ; x++){
+
+			for (int y = 1; y <= 9 ; y++){
+				cout << "\nConflicts at this point = " << thiscMatrix[(x-1)][(y-1)];
+
+				if (thiscMatrix[(x-1)][(y-1)] <= conflicts){
+
+					if(IsBlank(x, y)){
+
+						for (int k = 1; k <= 9 ; k++){
+
+							if (CheckConflicts(x,y,k)){
+
+								SetCell(x, y, k);
+								cout << "\nCongradulations, a " << k << " was placed at (" << x << ", " << y << ")\n";
+								if (IsSolved()){
+									return true;
+								}
+								Print();
+								if (smartPlaceN()){
+									return true;
+								} else {
+									cout << "\nRemoving a " << k << " that was placed at (" << x << ", " << y << ")\n";
+									ClearCell(x,y,k);
+									Print();
+								}
+							}
+						}
+						cout << "This got hit right meow";
+						return false;
+					}
+				}
+			}
+		}
+	}
+	cout << "The code got to a wierd false";
+	return false;
+}
 
 bool Board::CheckConflicts(int i, int j, ValueType val)
 //checks whether a value in a cell will cause conflicts
@@ -209,7 +288,7 @@ void Board::Print()
 {
 	for (int i = 1; i <= boardSize; i++)
 	{
-		if ((i-1) % squareSize == 0)
+		if (((i-1)) % squareSize == 0)
 		{
 			cout << " -";
 			for (int j = 1; j <= boardSize; j++)
@@ -219,7 +298,7 @@ void Board::Print()
 		}
 		for (int j = 1; j <= boardSize; j++)
 		{
-			if ((j-1) % squareSize == 0)
+			if (((j-1)) % squareSize == 0)
 				cout << "|";
 			if (!IsBlank(i,j))
 				cout << " " << GetCell(i,j) << " ";
@@ -279,6 +358,7 @@ void Board::PrintConflicts()
 	}
 
 }
+
 
 bool Board::PlaceN(int i, int j, int value){
 	if(IsBlank(i, j)){
@@ -460,9 +540,12 @@ int main()
 			b1.Initialize(fin);
 			b1.Print();
 			int i = 1;
-			while (b1.PlaceN(1,1, i) | (i < 9)) {
-				i++;
-			}
+			//while (b1.PlaceN(1,1, i) | (i < 9)) {
+			//	i++;
+			//}
+			if (b1.smartPlaceN()){
+				cout << "didn't work";
+			};
 			cout << "\n I'm done, going home!";
 		}
 
