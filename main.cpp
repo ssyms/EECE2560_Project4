@@ -501,8 +501,8 @@ bool Board::IsSolved()
 			if (value[i][j] == blank)
 			//checks if cell is blank
 			{
-				cout << "Board is not solved.\n";
-				cout << "Blank space at: " << i << ", " << j << endl;
+				//cout << "Board is not solved.\n";
+				//cout << "Blank space at: " << i << ", " << j << endl;
 				return false;
 			}
 
