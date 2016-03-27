@@ -519,12 +519,14 @@ int main()
 	ifstream fin;
 
 	std::cout << "Clock time: " << clock() << std::endl;
-    clock_t t1,t2;
+    clock_t t1,t2, t3, t4;
 
-    t1=clock();
 
 	// Read the sample grid from the file.
 	string fileName = "sudoku.txt";
+	int puzzleCounter = 0;
+
+	t3=clock();
 
 	fin.open(fileName.c_str());
 	if (!fin)
@@ -541,16 +543,19 @@ int main()
 
 		while (fin && fin.peek() != 'Z')
 		{
+			cout << "\nNow working on puzzle number " << puzzleCounter+1 << ":\n";
 			b1.Initialize(fin);
 			b1.Print();
-			int i = 1;
-			//while (b1.PlaceN(1,1, i) | (i < 9)) {
-			//	i++;
-			//}
+			t1=clock();
 			if (b1.smartPlaceN()){
 				cout << "\nGood Job";
 			};
-			cout << "\n I'm done, going home!";
+			t2=clock();
+			puzzleCounter++;
+		    float diff = ((float)t2-(float)t1);
+			float seconds = diff / CLOCKS_PER_SEC;
+			cout << "\nFinished puzzle number " << puzzleCounter << "\n";
+			cout << "This puzzle took " << seconds << " seconds to solve.\n\n\n";
 		}
 
 	}
@@ -560,10 +565,10 @@ int main()
 		cout << ex.what() << endl;
 		exit(1);
 	}
-	t2=clock();
-    float diff = ((float)t2-(float)t1);
 
+	t4=clock();
+	float diff = ((float)t4-(float)t3);
     float seconds = diff / CLOCKS_PER_SEC;
-    std::cout << "\n\nRuntime of program: "<< seconds << " seconds\n";
-
+    std::cout << "\n\nThe average puzzle took: "<< seconds/puzzleCounter << " seconds to solve\n";
+	std::cout << "\nRuntime of program: "<< seconds << " seconds\n";
 }
