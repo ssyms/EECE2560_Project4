@@ -70,7 +70,7 @@ void AddValue(int i, int j, ValueType val);
 bool IsSolved();
 
 //recursively solves the sudoku puzzle
-bool PlaceN(int i, int j);
+bool PlaceN(int i, int j, int value);
 
 private:
 
@@ -185,13 +185,9 @@ bool Board::CheckConflicts(int i, int j, ValueType val)
 //checks whether a value in a cell will cause conflicts
 {
 	int sq = SquareNumber(i, j);
-	cout << "SquareNumber: " << sq <<"\n";
 	bool r = conflictsRow[(i - 1)][(val - 1)];
 	bool c = conflictsCol[(j - 1)][(val - 1)];
 	bool s = conflictsSq[(sq - 1)][(val - 1)];
-	if ( i == 8 &&  j == 1 && sq == 7){
-		cout << " This is the one !!!! r = " << r << ", c = " << c << ", s = " << s << "\n";
-	}
 	//returns false if there IS a conflict
 	return r && c && s;
 }
@@ -284,6 +280,47 @@ void Board::PrintConflicts()
 
 }
 
+bool Board::PlaceN(int i, int j, int value){
+	if(IsBlank(i, j)){
+		SetCell(i, j, value);
+		Print();
+	}
+	if (i == 9 && j == 9){
+		return IsSolved();
+	}
+	j = (i == 9) ? j+1 : j;
+	if(IsBlank((i%9)+1, j)){
+		for (int k = 1; k <= 9; k++){
+			if (CheckConflicts((i%9)+1,j,k)){
+				Print();
+				if (PlaceN((i%9)+1,j,k)){
+					return true;
+				} else {
+					ClearCell((i%9)+1,j,k);
+					Print();
+				}
+			}
+		}
+		return false;
+	} else {
+		j = (i == 8) ? j+1 : j;
+		for (int k = 1; k <= 9; k++){
+			if (CheckConflicts((i%9)+2,j,k)){
+				Print();
+				if (PlaceN((i%9)+2,j,k)){
+					return true;
+				} else {
+					ClearCell((i%9)+2,j,k);
+					Print();
+				}
+			}
+		}
+		return false;
+	}
+	return false;
+}
+
+/*
 bool Board::PlaceN(int i, int j)
 //recursively solves sudoku puzzle
 {
@@ -359,6 +396,7 @@ bool Board::PlaceN(int i, int j)
 		return PlaceN(i + 1,j);
 	}
 }
+*/
 
 void Board::AddValue(int i, int j, ValueType val)
 //cheks conflicts, adds value to cell, updates conflicts
@@ -421,12 +459,9 @@ int main()
 		{
 			b1.Initialize(fin);
 			b1.Print();
-			if (b1.PlaceN(1,1)) {
-				cout << "done son\n";
-				b1.Print();
-				b1.IsSolved();
-			} else {
-				cout << "\nThere was no solution, sorry guys.";
+			int i = 1;
+			while (b1.PlaceN(1,1, i) | (i < 9)) {
+				i++;
 			}
 			cout << "\n I'm done, going home!";
 		}
