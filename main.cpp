@@ -209,7 +209,6 @@ int ** Board::calculateConflictsMatrix(){
 			for (int k = 1; k <= 9 ; k++){
 				if (CheckConflicts(i, j, k)) {
 					dynamiccMatrix[(i-1)][(j-1)] += 1;
-					cout << "This is the new conflicts # : " << dynamiccMatrix[(i-1)][(j-1)];
 				};
 			}
 		}
@@ -219,12 +218,11 @@ int ** Board::calculateConflictsMatrix(){
 
 
 bool Board::smartPlaceN(){
-	int ** thiscMatrix;
+	int ** thiscMatrix = calculateConflictsMatrix();
 	for (int conflicts = 1; conflicts <= 9; conflicts++){
 		for (int x = 1; x <= 9 ; x++){
 
 			for (int y = 1; y <= 9 ; y++){
-				cout << "\nConflicts at this point = " << thiscMatrix[(x-1)][(y-1)];
 
 				if (thiscMatrix[(x-1)][(y-1)] <= conflicts){
 
@@ -237,6 +235,8 @@ bool Board::smartPlaceN(){
 								SetCell(x, y, k);
 								cout << "\nCongradulations, a " << k << " was placed at (" << x << ", " << y << ")\n";
 								if (IsSolved()){
+									cout << "SOLVED!!!!";
+									Print();
 									return true;
 								}
 								Print();
@@ -249,14 +249,12 @@ bool Board::smartPlaceN(){
 								}
 							}
 						}
-						cout << "This got hit right meow";
 						return false;
 					}
 				}
 			}
 		}
 	}
-	cout << "The code got to a wierd false";
 	return false;
 }
 
@@ -544,7 +542,7 @@ int main()
 			//	i++;
 			//}
 			if (b1.smartPlaceN()){
-				cout << "didn't work";
+				cout << "\nGood Job";
 			};
 			cout << "\n I'm done, going home!";
 		}
